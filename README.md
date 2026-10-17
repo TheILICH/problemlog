@@ -11,36 +11,21 @@ Stack: Go (chi router + pgx, no ORM), PostgreSQL 17, everything started with Doc
 - the real `.env` (database password) is **not** in Git, it is next to `link.txt`
 - the repo only has `.env.example` with placeholder values
 
-## What you need
-
-- Git
-- Docker with Compose v2 (the `docker compose` command, with a space), for example Docker Desktop
-- internet on the first start (it downloads the images and Go modules)
-- port 8080 free (or set another `APP_PORT` in `.env`)
-
 ## Run it
+
+Open a terminal in the folder where the `.env` file is (the submission folder), then copy and paste all of this:
 
 ```bash
 git clone https://github.com/TheILICH/problemlog.git
+cp .env problemlog/.env
 cd problemlog
-```
-
-Now copy the `.env` file from the submission into this `problemlog` folder (the one with `compose.yaml`), then:
-
-```bash
 docker compose up --build
 ```
 
-The app is ready when the logs show `listening on :8080`. In a second terminal `docker compose ps` should show
-both services as **healthy**.
+It downloads the project, puts the `.env` file inside it, and starts the app. The first start takes a minute or two.
+The app is ready when the logs show `listening on :8080`. Then open http://localhost:8080/health
 
-Everything in one line, if the `.env` file is in your current folder (bash, zsh, Git Bash, PowerShell 7):
-
-```bash
-git clone https://github.com/TheILICH/problemlog.git && cp .env problemlog/.env && cd problemlog && docker compose up --build
-```
-
-No `.env` file? Then `cp .env.example .env` also works, the placeholder values are fine for a first start.
+No `.env` file? Replace the second line with `cp .env.example .env` and run it after the `cd problemlog` line.
 
 ## Check that it works
 
@@ -59,8 +44,6 @@ curl -s localhost:8080/stats
 curl -s localhost:8080/review
 ```
 
-Windows: run `curl` in Git Bash or WSL (the PowerShell `curl` is something else), or use Postman or the browser.
-
 ## API
 
 | Method | Path | What it does |
@@ -75,20 +58,6 @@ Windows: run `curl` in Git Bash or WSL (the PowerShell `curl` is something else)
 | POST | `/problems/{id}/attempts` | Log an attempt, also updates the problem status in one transaction |
 | GET | `/stats` | Solved/total per tag and per rating bucket, counted in SQL (`GROUP BY`) |
 | GET | `/review` | Problems to redo: last attempt failed, or solved more than 14 days ago |
-
-Add a problem:
-
-```bash
-curl -s -X POST localhost:8080/problems -H "Content-Type: application/json" \
-  -d '{"external_id":"1352C","title":"K-th Not Divisible by n","rating":1200,"tags":["math","binary search"]}'
-```
-
-Log an attempt (use the `id` from the answer above, it is `9` on a fresh database):
-
-```bash
-curl -s -X POST localhost:8080/problems/9/attempts -H "Content-Type: application/json" \
-  -d '{"verdict":"WA","minutes":35}'
-```
 
 Rules: `rating` is 800-3500, `verdict` is one of `AC WA TLE MLE RE CE`, status is `todo`, `attempted` or `solved`.
 An `AC` attempt makes the problem `solved`, any other verdict moves `todo` to `attempted`.
@@ -110,17 +79,6 @@ To start from zero (volume is deleted, demo data comes back):
 docker compose down -v
 docker compose up -d
 ```
-
-## How the pieces connect
-
-- `compose.yaml` starts two services, `db` (postgres:17-alpine) and `backend` (built from `./Dockerfile`)
-- both are on the network `backend-net`, the backend finds the database by the service name `db`
-- the db port is not published, only the backend can talk to it. The API is published on `localhost:8080`
-- `depends_on: condition: service_healthy`: the backend waits until `pg_isready` passes, and it also retries
-  the connection for 60 s as a backup
-- the credentials live only in `.env`. Compose reads it and passes the values to both services
-- on start the backend runs the SQL files from `migrations/` (goose, embedded in the binary): tables first,
-  then the demo data, one time only
 
 ## Configuration
 
@@ -146,27 +104,3 @@ internal/api/             chi router, validation, JSON handlers
 migrations/               00001_init.sql (tables), 00002_seed_demo.sql (demo data)
 ```
 
-## Assignment checklist
-
-| Requirement | Where |
-|---|---|
-| Backend with a meaningful API | `internal/api`, table above |
-| Relational database, backend reads and writes | PostgreSQL, `internal/store` |
-| `compose.yaml` with backend and database | `compose.yaml` |
-| Custom Dockerfile for the backend | `Dockerfile` |
-| Ports, networks, service names, dependencies | `backend-net`, `db` / `backend`, `depends_on: service_healthy` |
-| Environment variables for DB and app config | `compose.yaml`, read in `internal/config` |
-| No secrets in source or Git | only `.env.example` is committed, `.env` is in `.gitignore` |
-| Named volume for DB data | `pgdata` |
-| Data stays after stop and recreate | section "Data stays after the containers are removed" |
-| Starts with `docker compose up` | section "Run it" |
-
-## Troubleshooting
-
-- **`required variable POSTGRES_PASSWORD is missing`**: there is no `.env` next to `compose.yaml`
-  (copy the one from the submission, or `cp .env.example .env`).
-- **`port is already allocated`**: another program uses 8080, put another `APP_PORT` in `.env`.
-- **Backend can't log in after the password in `.env` was changed**: Postgres reads the password only when it
-  creates the volume the first time. Run `docker compose down -v` and start again.
-- **Logs**: `docker compose logs -f backend`
-- **Unit tests** (needs Go installed): `go test ./...`
