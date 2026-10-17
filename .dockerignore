@@ -1,0 +1,13 @@
+# keep secrets and junk out of the image
+.git
+.gitignore
+.dockerignore
+.env
+.env.*
+Dockerfile
+compose.yaml
+README.md
+bin/
+*.zip
+.idea/
+.vscode/
