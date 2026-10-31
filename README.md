@@ -13,7 +13,8 @@ Stack: Go (chi router + pgx, no ORM), PostgreSQL 17, everything started with Doc
 
 ## Run it
 
-Unzip the submitted zip, open a terminal in the folder where the `.env` file is, then copy and paste all of this:
+Unzip the submitted zip, it has two files: `.env` (real database credentials) and `link.txt` (link to this repo).
+Open a terminal in the folder where these two files are, then copy and paste all of this:
 
 ```bash
 git clone https://github.com/TheILICH/problemlog.git
