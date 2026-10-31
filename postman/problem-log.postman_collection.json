@@ -1,0 +1,593 @@
+{
+  "info": {
+    "name": "Problem Log",
+    "description": "All endpoints of the Problem Log API. Run top to bottom: Create problem saves the new id into {{problemId}}, the last folder deletes it again so the collection can be run many times.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "problemId",
+      "value": ""
+    },
+    {
+      "key": "externalId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Basics",
+      "item": [
+        {
+          "name": "Index (list of routes)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080"
+            }
+          }
+        },
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/health",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "health"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Problems CRUD",
+      "item": [
+        {
+          "name": "List problems",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/problems",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "problems"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List problems (tag + status filter)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/problems?tag=dp&status=attempted",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "problems"
+              ],
+              "query": [
+                {
+                  "key": "tag",
+                  "value": "dp"
+                },
+                {
+                  "key": "status",
+                  "value": "attempted"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List problems (rating range)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/problems?min_rating=1200&max_rating=1800",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "problems"
+              ],
+              "query": [
+                {
+                  "key": "min_rating",
+                  "value": "1200"
+                },
+                {
+                  "key": "max_rating",
+                  "value": "1800"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create problem",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// unique external_id so a second run does not hit 409",
+                  "pm.collectionVariables.set('externalId', '1352C-' + Date.now().toString().slice(-6));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// save new id, all next requests use {{problemId}}",
+                  "pm.collectionVariables.set('problemId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"platform\": \"codeforces\",\n  \"external_id\": \"{{externalId}}\",\n  \"title\": \"K-th Not Divisible by n\",\n  \"rating\": 1200,\n  \"tags\": [\"math\", \"binary search\"],\n  \"notes\": \"first try\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/problems",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "problems"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create same problem again (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"external_id\": \"{{externalId}}\",\n  \"title\": \"K-th Not Divisible by n\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/problems",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "problems"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get problem by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/problems/{{problemId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "problems",
+                "{{problemId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update problem (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 1300,\n  \"tags\": [\"math\", \"binary search\", \"implementation\"],\n  \"notes\": \"answer is k + (k-1)/(n-1)\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/problems/{{problemId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "problems",
+                "{{problemId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Attempts",
+      "item": [
+        {
+          "name": "Add attempt (WA)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verdict\": \"WA\",\n  \"minutes\": 35\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/problems/{{problemId}}/attempts",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "problems",
+                "{{problemId}}",
+                "attempts"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add attempt (AC)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verdict\": \"AC\",\n  \"minutes\": 20\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/problems/{{problemId}}/attempts",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "problems",
+                "{{problemId}}",
+                "attempts"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List attempts of problem",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/problems/{{problemId}}/attempts",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "problems",
+                "{{problemId}}",
+                "attempts"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Stats and review",
+      "item": [
+        {
+          "name": "Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/stats",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "stats"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Review (what to redo)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/review",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "review"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Error cases",
+      "item": [
+        {
+          "name": "Get unknown problem (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/problems/999999",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "problems",
+                "999999"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Bad id in path (400)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/problems/abc",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "problems",
+                "abc"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create with rating out of range (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"external_id\": \"9999Z\",\n  \"title\": \"Too hard\",\n  \"rating\": 5000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/problems",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "problems"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH with typo in field (400)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ratting\": 1500\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/problems/{{problemId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "problems",
+                "{{problemId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Attempt with unknown verdict (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verdict\": \"OK\",\n  \"minutes\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/problems/{{problemId}}/attempts",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "problems",
+                "{{problemId}}",
+                "attempts"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Cleanup",
+      "item": [
+        {
+          "name": "Delete problem",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/problems/{{problemId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "problems",
+                "{{problemId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get deleted problem (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/problems/{{problemId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "problems",
+                "{{problemId}}"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
